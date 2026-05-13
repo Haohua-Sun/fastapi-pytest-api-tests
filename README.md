@@ -2,7 +2,7 @@
 
 本项目面向 `full-stack-fastapi-template` 搭建接口自动化测试套件，用于展示基于 Python 的接口测试设计、框架封装、数据驱动、响应契约校验、测试数据清理和报告输出能力。
 
-测试套件使用 `requests` 封装 HTTP 请求，使用 `pytest` 组织测试用例，结合 JSON 数据驱动、JSON Schema 校验、Allure 报告和可选数据库断言，覆盖登录认证、用户管理、管理员操作、Item 资源和核心业务链路。
+测试套件使用 `requests` 封装 HTTP 请求，使用 `pytest` 组织测试用例，结合 JSON 数据驱动、JSON Schema 校验、Allure 报告和数据库断言，覆盖登录认证、用户管理、管理员操作、Item 资源和核心业务链路。
 
 ## 技术栈
 
@@ -10,7 +10,7 @@
 - `requests`: HTTP 请求封装
 - `jsonschema`: 响应结构和字段契约校验
 - `allure-pytest`: 测试报告原始结果生成
-- `SQLAlchemy` + `psycopg`: 可选数据库断言
+- `SQLAlchemy` + `psycopg`: 数据库持久化断言
 - `python-dotenv`: 本地 `.env` 配置加载
 - `ruff`: 代码静态检查和格式约束
 
@@ -22,7 +22,7 @@
 - 根据根目录 `openapi.json` 维护响应 JSON Schema，校验 token、用户、Item、列表、消息和校验错误响应。
 - 覆盖正向、反向、边界值、权限隔离、完整 CRUD 流程和管理员用户管理流程。
 - 对 Allure 附件中的 token、password、Authorization 等敏感字段做脱敏处理。
-- 提供可选数据库断言，验证 API 操作后的持久化结果。
+- 提供数据库断言，验证 API 操作后的持久化结果。
 
 ## 目录结构
 
@@ -78,7 +78,7 @@ API_TEST_DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/app
 - `BASE_URL`: 被测 API 服务地址。
 - `ADMIN_EMAIL` / `ADMIN_PASSWORD`: 管理员账号，用于获取管理员 token。
 - `API_TEST_TIMEOUT`: 接口请求超时时间，单位为秒。
-- `API_TEST_DATABASE_URL`: 可选数据库连接串。未配置时，`@pytest.mark.db` 用例会自动跳过。
+- `API_TEST_DATABASE_URL`: 数据库连接串，用于执行持久化断言。
 
 ## 安装依赖
 
@@ -190,7 +190,7 @@ http://<WSL_IP>:5050
 - `items`: Item 资源查询、创建、更新、删除。
 - `flow`: 多步骤业务链路。
 - `schema`: 响应 JSON Schema 校验。
-- `db`: 可选数据库断言，需要配置 `API_TEST_DATABASE_URL`。
+- `db`: 数据库持久化断言，需要配置 `API_TEST_DATABASE_URL`。
 
 ## 当前覆盖
 
@@ -200,4 +200,14 @@ http://<WSL_IP>:5050
 
 ## CI 状态
 
-当前未启用 CI。原因是被测 FastAPI 服务运行在本地 Docker/WSL 环境，GitHub Actions 云端无法直接访问本机 `localhost:8000`。后续如果需要接入 Jenkins，可在 Jenkins 节点中启动被测服务并执行 `python -m pytest -v`，再由 Jenkins Allure 插件读取 `allure-results` 目录。
+已启用 GitHub Actions CI，配置文件位于 `.github/workflows/api-tests.yml`。
+
+CI 不依赖本地 `.env` 文件。每次 push、pull request 或手动触发 workflow 时，GitHub Actions 会：
+
+1. 拉取本测试仓库和 `Haohua-Sun/full-stack-fastapi-template` 被测项目。
+2. 在 CI 环境中动态生成被测项目 `.env`。
+3. 使用 Docker Compose 启动 FastAPI 后端和 PostgreSQL。
+4. 安装测试依赖，执行 `ruff` 和 `pytest`。
+5. 上传 `allure-results` 原始报告作为 workflow artifact。
+
+Jenkins 可复用同一套执行思路：从 GitHub 拉取两个仓库，生成 CI 专用环境配置，启动被测服务后执行 `python -m pytest -v`，再由 Jenkins Allure 插件读取 `allure-results` 目录。

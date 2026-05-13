@@ -1,0 +1,107 @@
+name: API automation tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+permissions:
+  contents: read
+
+jobs:
+  pytest-api:
+    runs-on: ubuntu-latest
+
+    env:
+      APP_DIR: full-stack-fastapi-template
+      TEST_DIR: fastapi-pytest-api-tests
+      BASE_URL: http://localhost:8000
+      ADMIN_EMAIL: admin@example.com
+      ADMIN_PASSWORD: ci-password
+      API_TEST_DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/app
+      API_TEST_TIMEOUT: "20"
+
+    steps:
+      - name: Checkout API test suite
+        uses: actions/checkout@v4
+        with:
+          path: ${{ env.TEST_DIR }}
+
+      - name: Checkout FastAPI application
+        uses: actions/checkout@v4
+        with:
+          repository: Haohua-Sun/full-stack-fastapi-template
+          path: ${{ env.APP_DIR }}
+
+      - name: Create application environment file
+        working-directory: ${{ env.APP_DIR }}
+        run: |
+          cat > .env <<'EOF'
+          PROJECT_NAME=FastAPI CI
+          STACK_NAME=fastapi-ci
+          DOMAIN=localhost
+          FRONTEND_HOST=http://localhost:5173
+          ENVIRONMENT=local
+          BACKEND_CORS_ORIGINS=http://localhost:5173
+          SECRET_KEY=ci-secret-key-for-api-automation-tests
+          FIRST_SUPERUSER=admin@example.com
+          FIRST_SUPERUSER_PASSWORD=ci-password
+          POSTGRES_SERVER=db
+          POSTGRES_PORT=5432
+          POSTGRES_DB=app
+          POSTGRES_USER=postgres
+          POSTGRES_PASSWORD=postgres
+          DOCKER_IMAGE_BACKEND=fastapi-ci-backend
+          DOCKER_IMAGE_FRONTEND=fastapi-ci-frontend
+          SMTP_HOST=
+          SMTP_USER=
+          SMTP_PASSWORD=
+          EMAILS_FROM_EMAIL=noreply@example.com
+          SENTRY_DSN=
+          EOF
+
+      - name: Build and start FastAPI backend
+        working-directory: ${{ env.APP_DIR }}
+        run: |
+          docker compose down -v --remove-orphans
+          docker compose up -d --wait backend
+          curl -fsS http://localhost:8000/api/v1/utils/health-check/
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test dependencies
+        working-directory: ${{ env.TEST_DIR }}
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Run ruff
+        working-directory: ${{ env.TEST_DIR }}
+        run: python -m ruff check tests utils
+
+      - name: Run pytest API tests
+        working-directory: ${{ env.TEST_DIR }}
+        run: python -m pytest -v
+
+      - name: Show Docker logs on failure
+        if: failure()
+        working-directory: ${{ env.APP_DIR }}
+        run: docker compose logs db prestart backend
+
+      - name: Upload Allure raw results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results
+          path: ${{ env.TEST_DIR }}/allure-results
+          if-no-files-found: ignore
+
+      - name: Stop FastAPI application
+        if: always()
+        working-directory: ${{ env.APP_DIR }}
+        run: docker compose down -v --remove-orphans

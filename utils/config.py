@@ -16,7 +16,7 @@ class TestSettings:
     admin_email: str = ""
     admin_password: str = ""
     request_timeout: float = 10.0
-    database_url: str | None = None
+    database_url: str = ""
 
 
 def load_settings() -> TestSettings:
@@ -27,8 +27,7 @@ def load_settings() -> TestSettings:
     timeout_raw = os.getenv("API_TEST_TIMEOUT", str(TestSettings.request_timeout)).strip()
     admin_email = os.getenv("ADMIN_EMAIL", "").strip()
     admin_password = os.getenv("ADMIN_PASSWORD", "")
-    database_url_raw = os.getenv("API_TEST_DATABASE_URL")
-    database_url = database_url_raw.strip() if database_url_raw else None
+    database_url = os.getenv("API_TEST_DATABASE_URL", "").strip()
 
     try:
         timeout = float(timeout_raw)
@@ -46,6 +45,7 @@ def load_settings() -> TestSettings:
         for name, value in {
             "ADMIN_EMAIL": admin_email,
             "ADMIN_PASSWORD": admin_password,
+            "API_TEST_DATABASE_URL": database_url,
         }.items()
         if not value
     ]

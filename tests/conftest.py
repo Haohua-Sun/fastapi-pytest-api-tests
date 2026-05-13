@@ -76,8 +76,6 @@ def admin_token(api_client: ApiClient, admin_email: str, admin_password: str) ->
 
 @pytest.fixture(scope="session")
 def db_client(settings: TestSettings) -> DatabaseClient:
-    if not settings.database_url:
-        pytest.skip("Set API_TEST_DATABASE_URL to enable optional database assertion tests.")
     return DatabaseClient(settings.database_url)
 
 

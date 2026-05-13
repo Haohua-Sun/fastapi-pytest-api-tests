@@ -10,7 +10,7 @@
 - 当前 pytest 收集用例数：58
 - 已知缺陷用例：1 条 `xfail`
 
-当前覆盖重点放在核心业务回归：登录认证、用户资料、管理员用户管理、Item CRUD、权限隔离、响应契约校验和可选数据库断言。
+当前覆盖重点放在核心业务回归：登录认证、用户资料、管理员用户管理、Item CRUD、权限隔离、响应契约校验和数据库断言。
 
 ## 已覆盖接口
 
@@ -42,7 +42,7 @@
 | PUT | `/api/v1/items/{id}` | 更新后 `title`、`description` 持久化 | `test_07_database.py` |
 | DELETE | `/api/v1/items/{id}` | 删除后数据库记录不存在 | `test_07_database.py` |
 
-数据库断言为可选能力，需要配置 `API_TEST_DATABASE_URL`。未配置时相关用例自动跳过。
+数据库断言通过 `API_TEST_DATABASE_URL` 连接被测服务使用的 PostgreSQL 数据库，验证 API 操作后的持久化结果。
 
 ## 响应契约覆盖
 
