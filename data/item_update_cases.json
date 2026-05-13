@@ -1,0 +1,86 @@
+[
+  {
+    "case_id": "ITEM-UPDATE-001",
+    "desc": "更新title成功",
+    "auth_type": "valid_token",
+    "id_source": "env_item_id",
+    "title": "Updated Title A",
+    "description": "__MISSING__",
+    "expected_status": 200
+  },
+  {
+    "case_id": "ITEM-UPDATE-002",
+    "desc": "更新description成功",
+    "auth_type": "valid_token",
+    "id_source": "env_item_id",
+    "title": "__MISSING__",
+    "description": "Updated description A",
+    "expected_status": 200
+  },
+  {
+    "case_id": "ITEM-UPDATE-003",
+    "desc": "更新title到边界长度255成功",
+    "auth_type": "valid_token",
+    "id_source": "env_item_id",
+    "title": "__TITLE_LEN_255__",
+    "description": "__MISSING__",
+    "expected_status": 200
+  },
+  {
+    "case_id": "ITEM-UPDATE-004",
+    "desc": "更新description到边界长度255成功",
+    "auth_type": "valid_token",
+    "id_source": "env_item_id",
+    "title": "__MISSING__",
+    "description": "__DESC_LEN_255__",
+    "expected_status": 200
+  },
+  {
+    "case_id": "ITEM-UPDATE-005",
+    "desc": "不存在id更新失败",
+    "auth_type": "valid_token",
+    "id_source": "not_exist",
+    "title": "Updated Title B",
+    "description": "__MISSING__",
+    "expected_status": 404,
+    "expected_detail": "Item not found"
+  },
+  {
+    "case_id": "ITEM-UPDATE-006",
+    "desc": "非法uuid更新失败",
+    "auth_type": "valid_token",
+    "id_source": "invalid_uuid",
+    "title": "Updated Title C",
+    "description": "__MISSING__",
+    "expected_status": 422
+  },
+  {
+    "case_id": "ITEM-UPDATE-007",
+    "desc": "title为空更新失败",
+    "auth_type": "valid_token",
+    "id_source": "env_item_id",
+    "title": "",
+    "description": "__MISSING__",
+    "expected_status": 422
+  },
+  {
+    "case_id": "ITEM-UPDATE-008",
+    "desc": "缺失token更新失败",
+    "auth_type": "missing_token",
+    "id_source": "env_item_id",
+    "title": "No Token Update",
+    "description": "__MISSING__",
+    "expected_status": 401,
+    "expected_detail": "Not authenticated"
+  },
+  {
+    "case_id": "ITEM-UPDATE-009",
+    "desc": "非法token更新失败",
+    "auth_type": "invalid_token",
+    "id_source": "env_item_id",
+    "title": "Invalid Token Update",
+    "description": "__MISSING__",
+    "expected_status": 403,
+    "expected_detail": "Could not validate credentials"
+  }
+]

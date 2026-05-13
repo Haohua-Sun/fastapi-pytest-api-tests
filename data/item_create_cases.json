@@ -1,0 +1,92 @@
+[
+  {
+    "case_id": "ITEM-CREATE-001",
+    "desc": "仅传title创建成功",
+    "auth_type": "valid_token",
+    "title": "Item Title A",
+    "description": "__MISSING__",
+    "expected_status": 200
+  },
+  {
+    "case_id": "ITEM-CREATE-002",
+    "desc": "传title和description创建成功",
+    "auth_type": "valid_token",
+    "title": "Item Title B",
+    "description": "Item description B",
+    "expected_status": 200
+  },
+  {
+    "case_id": "ITEM-CREATE-003",
+    "desc": "title长度为1创建成功",
+    "auth_type": "valid_token",
+    "title": "__TITLE_LEN_1__",
+    "description": "__MISSING__",
+    "expected_status": 200
+  },
+  {
+    "case_id": "ITEM-CREATE-004",
+    "desc": "title长度为255创建成功",
+    "auth_type": "valid_token",
+    "title": "__TITLE_LEN_255__",
+    "description": "__MISSING__",
+    "expected_status": 200
+  },
+  {
+    "case_id": "ITEM-CREATE-005",
+    "desc": "description长度为255创建成功",
+    "auth_type": "valid_token",
+    "title": "Valid Boundary Title",
+    "description": "__DESC_LEN_255__",
+    "expected_status": 200
+  },
+  {
+    "case_id": "ITEM-CREATE-006",
+    "desc": "缺少title创建失败",
+    "auth_type": "valid_token",
+    "title": "__MISSING__",
+    "description": "Only description",
+    "expected_status": 422
+  },
+  {
+    "case_id": "ITEM-CREATE-007",
+    "desc": "title为空创建失败",
+    "auth_type": "valid_token",
+    "title": "",
+    "description": "Empty title",
+    "expected_status": 422
+  },
+  {
+    "case_id": "ITEM-CREATE-008",
+    "desc": "title超过255创建失败",
+    "auth_type": "valid_token",
+    "title": "__TITLE_OVER_255__",
+    "description": "Too long title",
+    "expected_status": 422
+  },
+  {
+    "case_id": "ITEM-CREATE-009",
+    "desc": "description超过255创建失败",
+    "auth_type": "valid_token",
+    "title": "Valid Title",
+    "description": "__DESC_OVER_255__",
+    "expected_status": 422
+  },
+  {
+    "case_id": "ITEM-CREATE-010",
+    "desc": "缺失token创建失败",
+    "auth_type": "missing_token",
+    "title": "No Token Item",
+    "description": "desc",
+    "expected_status": 401,
+    "expected_detail": "Not authenticated"
+  },
+  {
+    "case_id": "ITEM-CREATE-011",
+    "desc": "非法token创建失败",
+    "auth_type": "invalid_token",
+    "title": "Invalid Token Item",
+    "description": "desc",
+    "expected_status": 403,
+    "expected_detail": "Could not validate credentials"
+  }
+]
