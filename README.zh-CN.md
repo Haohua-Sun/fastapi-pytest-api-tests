@@ -164,8 +164,18 @@ GitHub Actions 已在 [.github/workflows/api-tests.yml](.github/workflows/api-te
 - 使用带有 `api-tests` label 的 agent 执行构建。
 - agent 连接成功后，将 built-in node 的 executor 数量设置为 `0`。
 - 安装 Allure Jenkins 插件，在构建页面直接发布 `allure-results`，同时继续归档 `allure-results` 和 `allure-report` 作为兜底。
-- 如果 Jenkins 能被 GitHub 访问，建议使用 GitHub webhook 触发；本地 Jenkins 无法被 GitHub 访问时，Jenkinsfile 已启用每 5 分钟一次的 SCM 轮询。
+- 如果 Jenkins 能被 GitHub 访问，建议使用 GitHub webhook 触发；本地 Jenkins 无法被 GitHub 访问时，Jenkinsfile 仍保留每 5 分钟一次的 SCM 轮询作为兜底。
 
 Jenkins 流水线会拉取本测试仓库，克隆 `Haohua-Sun/full-stack-fastapi-template`，生成 CI 环境配置，使用 Docker Compose 启动 FastAPI 后端和 PostgreSQL，执行 `ruff` 和 `pytest`，发布 JUnit 结果，生成 Allure HTML 报告，归档报告 artifacts，并清理 Compose 环境。
 
 Jenkinsfile 会发布 JUnit 结果，通过 Allure Jenkins 插件发布 Allure 报告，同时将 `allure-results` 和生成的 `allure-report` 目录作为构建 artifacts 归档。
+
+Jenkinsfile 已通过 `githubPush()` 预留 webhook 触发。若 Jenkins 部署在 GitHub 可访问的地址上，可在 GitHub 仓库中添加 webhook：
+
+```text
+Payload URL: http(s)://<jenkins-host>/github-webhook/
+Content type: application/json
+Events: Just the push event
+```
+
+本地 Docker/WSL 中的 Jenkins 通常无法被 GitHub 访问，因此本地自动化仍依赖 SCM 轮询触发。

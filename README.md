@@ -164,8 +164,18 @@ Recommended Jenkins setup:
 - Run builds on an agent labeled `api-tests`.
 - Keep the built-in node executor count at `0` after the agent is connected.
 - Install the Allure Jenkins plugin to publish `allure-results` directly on the build page, while still archiving `allure-results` and `allure-report` as a fallback.
-- Use GitHub webhooks when Jenkins is reachable from GitHub; for a local Jenkins instance, the Jenkinsfile also enables SCM polling every 5 minutes.
+- Use GitHub webhooks when Jenkins is reachable from GitHub; for a local Jenkins instance, the Jenkinsfile also keeps SCM polling every 5 minutes as a fallback.
 
 The Jenkins pipeline checks out this test suite, clones `Haohua-Sun/full-stack-fastapi-template`, creates CI environment files, starts the FastAPI backend and PostgreSQL with Docker Compose, runs `ruff` and `pytest`, publishes JUnit results, generates an Allure HTML report, archives report artifacts, and cleans up the Compose stack.
 
 The Jenkinsfile publishes JUnit results, publishes the Allure report through the Allure Jenkins plugin, and also archives `allure-results` and the generated `allure-report` directory as build artifacts.
+
+Webhook trigger support is preconfigured with `githubPush()`. For a publicly reachable Jenkins instance, add this GitHub repository webhook:
+
+```text
+Payload URL: http(s)://<jenkins-host>/github-webhook/
+Content type: application/json
+Events: Just the push event
+```
+
+Local Docker/WSL Jenkins instances are usually not reachable from GitHub, so SCM polling remains enabled for local automation.
