@@ -13,6 +13,7 @@ permissions:
 jobs:
   pytest-api:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     env:
       APP_DIR: full-stack-fastapi-template
@@ -73,6 +74,8 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: "3.12"
+          cache: pip
+          cache-dependency-path: ${{ env.TEST_DIR }}/requirements.txt
 
       - name: Install test dependencies
         working-directory: ${{ env.TEST_DIR }}
@@ -93,6 +96,24 @@ jobs:
         working-directory: ${{ env.APP_DIR }}
         run: docker compose logs db prestart backend
 
+      - name: Install Allure CLI
+        if: always()
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y default-jre
+          npm install -g allure-commandline
+
+      - name: Generate Allure HTML report
+        if: always()
+        working-directory: ${{ env.TEST_DIR }}
+        run: |
+          if [ -d allure-results ] && [ "$(find allure-results -type f | wc -l)" -gt 0 ]; then
+            allure generate allure-results -o allure-report --clean
+          else
+            mkdir -p allure-report
+            printf '%s\n' '<!doctype html><title>Allure report</title><p>No Allure results were generated.</p>' > allure-report/index.html
+          fi
+
       - name: Upload Allure raw results
         if: always()
         uses: actions/upload-artifact@v7
@@ -100,6 +121,14 @@ jobs:
           name: allure-results
           path: ${{ env.TEST_DIR }}/allure-results
           if-no-files-found: ignore
+
+      - name: Upload Allure HTML report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: allure-report
+          path: ${{ env.TEST_DIR }}/allure-report
+          if-no-files-found: error
 
       - name: Stop FastAPI application
         if: always()

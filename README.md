@@ -14,7 +14,7 @@ The suite covers authentication, token validation, user workflows, administrator
 - JSON Schema assertions based on the OpenAPI contract in `openapi.json`.
 - Database assertions for create, update, and delete persistence behavior.
 - Sensitive value masking for Allure request/response attachments.
-- GitHub Actions CI that starts the FastAPI application with Docker Compose before running the test suite.
+- GitHub Actions CI that starts the FastAPI application with Docker Compose, runs the test suite, and uploads Allure artifacts.
 
 ## Tech Stack
 
@@ -23,6 +23,7 @@ The suite covers authentication, token validation, user workflows, administrator
 - `jsonschema`: response contract validation
 - `SQLAlchemy` + `psycopg`: PostgreSQL persistence assertions
 - `allure-pytest`: Allure raw result generation
+- Allure CLI: HTML report generation in CI and local runs
 - `python-dotenv`: local environment loading
 - `ruff`: static checks
 - GitHub Actions + Docker Compose: CI execution environment
@@ -67,7 +68,7 @@ Create a local `.env` file from `.env.example` when running the suite outside CI
 ```env
 BASE_URL=http://localhost:8000
 ADMIN_EMAIL=admin@example.com
-ADMIN_PASSWORD=changethis
+ADMIN_PASSWORD=your-admin-password
 API_TEST_TIMEOUT=10
 API_TEST_DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/app
 ```
@@ -138,7 +139,8 @@ On push, pull request, or manual dispatch, CI:
 3. Creates a CI-only `.env` file for the FastAPI application.
 4. Starts the FastAPI backend and PostgreSQL with Docker Compose.
 5. Runs `ruff` and the full `pytest` API test suite.
-6. Uploads `allure-results` as a workflow artifact.
-7. Prints Docker logs on failure and cleans up the Compose stack.
+6. Generates an Allure HTML report from `allure-results`.
+7. Uploads both `allure-results` and `allure-report` as workflow artifacts.
+8. Prints Docker logs on failure and cleans up the Compose stack.
 
-The same execution model can be reused in Jenkins: clone both repositories, generate CI environment configuration, start the application stack, run `python -m pytest -v`, and publish the Allure results.
+The same execution model can be reused in Jenkins: clone both repositories, generate CI environment configuration, start the application stack, run `python -m pytest -v`, generate the Allure HTML report, and publish the Allure results.
