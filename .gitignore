@@ -7,3 +7,4 @@ allure-report/
 .env
 .env.*
 !.env.example
+doc.md

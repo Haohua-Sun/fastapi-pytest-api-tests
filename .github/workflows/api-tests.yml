@@ -25,12 +25,12 @@ jobs:
 
     steps:
       - name: Checkout API test suite
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: ${{ env.TEST_DIR }}
 
       - name: Checkout FastAPI application
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: Haohua-Sun/full-stack-fastapi-template
           path: ${{ env.APP_DIR }}
@@ -70,7 +70,7 @@ jobs:
           curl -fsS http://localhost:8000/api/v1/utils/health-check/
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
@@ -95,7 +95,7 @@ jobs:
 
       - name: Upload Allure raw results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: allure-results
           path: ${{ env.TEST_DIR }}/allure-results
