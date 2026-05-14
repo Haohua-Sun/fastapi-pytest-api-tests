@@ -1,5 +1,7 @@
 # FastAPI Pytest API Test Suite
 
+English | [简体中文](README.zh-CN.md)
+
 [![API automation tests](https://github.com/Haohua-Sun/fastapi-pytest-api-tests/actions/workflows/api-tests.yml/badge.svg)](https://github.com/Haohua-Sun/fastapi-pytest-api-tests/actions/workflows/api-tests.yml)
 
 An API automation test suite for [`full-stack-fastapi-template`](https://github.com/Haohua-Sun/full-stack-fastapi-template), built with `pytest`, `requests`, JSON Schema validation, SQLAlchemy database assertions, Allure result output, and GitHub Actions CI.
@@ -54,6 +56,7 @@ The suite covers authentication, token validation, user workflows, administrator
 │   └── schemas.py
 ├── .github/workflows/api-tests.yml
 ├── .env.example
+├── Jenkinsfile
 ├── OPENAPI_COVERAGE.md
 ├── openapi.json
 ├── pytest.ini
@@ -111,6 +114,15 @@ allure generate allure-results -o allure-report --clean
 allure open allure-report
 ```
 
+When downloading the `allure-report` artifact from GitHub Actions, serve the extracted directory over HTTP before opening it:
+
+```bash
+cd allure-report
+python3 -m http.server 5050
+```
+
+Then open `http://localhost:5050`. Opening `index.html` directly with `file://` can show a blank Allure page because the browser blocks local JSON loading.
+
 ## Test Markers
 
 - `smoke`: service availability
@@ -143,4 +155,15 @@ On push, pull request, or manual dispatch, CI:
 7. Uploads both `allure-results` and `allure-report` as workflow artifacts.
 8. Prints Docker logs on failure and cleans up the Compose stack.
 
-The same execution model can be reused in Jenkins: clone both repositories, generate CI environment configuration, start the application stack, run `python -m pytest -v`, generate the Allure HTML report, and publish the Allure results.
+## Jenkins Pipeline
+
+This repository also includes a [Jenkinsfile](Jenkinsfile). A Jenkins Pipeline job can run it with `Pipeline script from SCM`.
+
+Recommended Jenkins setup:
+
+- Run builds on an agent labeled `api-tests`.
+- Keep the built-in node executor count at `0` after the agent is connected.
+- Install the Allure Jenkins plugin to publish `allure-results` directly on the build page.
+- Use GitHub webhooks when Jenkins is reachable from GitHub; for a local Jenkins instance, the Jenkinsfile also enables SCM polling every 5 minutes.
+
+The Jenkins pipeline checks out this test suite, clones `Haohua-Sun/full-stack-fastapi-template`, creates CI environment files, starts the FastAPI backend and PostgreSQL with Docker Compose, runs `ruff` and `pytest`, publishes JUnit results, generates an Allure HTML report, archives report artifacts, and cleans up the Compose stack.

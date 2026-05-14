@@ -113,6 +113,17 @@ jobs:
             mkdir -p allure-report
             printf '%s\n' '<!doctype html><title>Allure report</title><p>No Allure results were generated.</p>' > allure-report/index.html
           fi
+          cat > allure-report/README.txt <<'EOF'
+          Serve this directory over HTTP before opening index.html.
+
+          Example:
+            python3 -m http.server 5050
+
+          Then open:
+            http://localhost:5050
+
+          Opening index.html directly with file:// can show a blank Allure page because browser security blocks local JSON loading.
+          EOF
 
       - name: Upload Allure raw results
         if: always()
