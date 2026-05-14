@@ -152,19 +152,12 @@ EOF
             }
 
             junit testResults: 'pytest-results.xml', allowEmptyResults: true
+            allure commandline: 'allure',
+                includeProperties: false,
+                jdk: '',
+                resultPolicy: 'LEAVE_AS_IS',
+                results: [[path: 'allure-results']]
             archiveArtifacts artifacts: 'pytest-results.xml,allure-results/**,allure-report/**', allowEmptyArchive: true
-
-            script {
-                try {
-                    allure([
-                        includeProperties: false,
-                        jdk: '',
-                        results: [[path: 'allure-results']]
-                    ])
-                } catch (err) {
-                    echo "Allure Jenkins plugin is unavailable or not configured: ${err}"
-                }
-            }
         }
     }
 }
