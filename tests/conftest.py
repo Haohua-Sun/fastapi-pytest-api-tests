@@ -4,6 +4,7 @@ from collections.abc import Iterator
 
 import allure
 import pytest
+from utils.allure_environment import write_allure_environment
 from utils.api_client import ApiClient
 from utils.assertions import assert_status, assert_token_response
 from utils.config import TestSettings, load_settings
@@ -50,7 +51,12 @@ def api_client(settings: TestSettings) -> Iterator[ApiClient]:
 
 
 @pytest.fixture(scope="session", autouse=True)
-def service_ready(api_client: ApiClient) -> None:
+def allure_environment(pytestconfig: pytest.Config) -> None:
+    write_allure_environment(pytestconfig)
+
+
+@pytest.fixture(scope="session", autouse=True)
+def service_ready(api_client: ApiClient, allure_environment: None) -> None:
     try:
         response = api_client.health_check()
     except AssertionError as exc:

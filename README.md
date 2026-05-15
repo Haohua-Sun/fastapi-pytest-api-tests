@@ -4,19 +4,42 @@ English | [简体中文](README.zh-CN.md)
 
 [![API automation tests](https://github.com/Haohua-Sun/fastapi-pytest-api-tests/actions/workflows/api-tests.yml/badge.svg)](https://github.com/Haohua-Sun/fastapi-pytest-api-tests/actions/workflows/api-tests.yml)
 
-An API automation test suite for [`full-stack-fastapi-template`](https://github.com/Haohua-Sun/full-stack-fastapi-template), built with `pytest`, `requests`, JSON Schema validation, SQLAlchemy database assertions, Allure result output, and GitHub Actions CI.
+An API automation test suite for [`full-stack-fastapi-template`](https://github.com/Haohua-Sun/full-stack-fastapi-template), built with `pytest`, `requests`, JSON Schema validation, PostgreSQL database assertions, Allure reporting, GitHub Actions, and Jenkins.
 
-The suite covers authentication, token validation, user workflows, administrator user management, Item CRUD, permission isolation, response contract validation, business flows, and persistence checks against PostgreSQL.
+The suite validates the FastAPI backend from an external client perspective. It covers authentication, token validation, user workflows, administrator operations, Item CRUD, permission isolation, response contract validation, multi-step business flows, and persistence checks.
 
-## Highlights
+## Test Results
 
-- Encapsulated `ApiClient` for request routing, auth headers, timeouts, response handling, and Allure attachments.
-- Pytest fixtures for environment loading, admin token management, temporary users/items, and test data cleanup.
-- Data-driven login and Item test cases maintained in JSON files.
-- JSON Schema assertions based on the OpenAPI contract in `openapi.json`.
-- Database assertions for create, update, and delete persistence behavior.
-- Sensitive value masking for Allure request/response attachments.
-- GitHub Actions CI that starts the FastAPI application with Docker Compose, runs the test suite, and uploads Allure artifacts.
+The current suite collects `58` pytest cases and covers `17/23` OpenAPI operations.
+
+- GitHub Actions runs the suite on push, pull request, and manual dispatch.
+- The application under test is started in CI with Docker Compose.
+- Allure raw results and generated HTML reports are uploaded as CI artifacts.
+- Jenkins Pipeline support is included through [Jenkinsfile](Jenkinsfile), with JUnit and Allure publication.
+- One known API defect is tracked with `xfail`: `GET /api/v1/items/` returns `500` for negative `skip`, while a validation error is expected.
+
+See [OPENAPI_COVERAGE.md](OPENAPI_COVERAGE.md) for the coverage matrix, database assertion scope, known defect tracking, and planned extensions.
+
+## Reports
+
+### Allure Report
+
+![Allure report overview](assets/allure-overview.png)
+
+### Jenkins Allure Report
+
+![Jenkins Allure report](assets/jenkins-allure-report.png)
+
+## Test Scope
+
+- `smoke`: service availability
+- `auth`: login, token, and authorization
+- `users`: signup, profile, and password workflows
+- `admin`: administrator user management
+- `items`: Item resource operations
+- `flow`: multi-step business workflows
+- `schema`: response contract validation
+- `db`: PostgreSQL persistence assertions
 
 ## Tech Stack
 
@@ -28,12 +51,66 @@ The suite covers authentication, token validation, user workflows, administrator
 - Allure CLI: HTML report generation in CI and local runs
 - `python-dotenv`: local environment loading
 - `ruff`: static checks
-- GitHub Actions + Docker Compose: CI execution environment
+- Docker Compose: application and database runtime in CI
+- GitHub Actions + Jenkins: CI execution and reporting
+
+## Continuous Integration
+
+GitHub Actions is enabled in [.github/workflows/api-tests.yml](.github/workflows/api-tests.yml).
+
+On push, pull request, or manual dispatch, CI:
+
+1. Checks out this API test suite.
+2. Checks out `Haohua-Sun/full-stack-fastapi-template`.
+3. Creates a CI-only `.env` file for the FastAPI application.
+4. Starts the FastAPI backend and PostgreSQL with Docker Compose.
+5. Runs `ruff` and the full `pytest` API test suite.
+6. Writes Allure environment metadata for the report overview.
+7. Generates an Allure HTML report from `allure-results`.
+8. Uploads `allure-results` and `allure-report` as workflow artifacts.
+9. Prints Docker logs on failure and cleans up the Compose stack.
+
+The application repository can also run this external suite through its own API regression workflow, so both test-suite changes and application changes can trigger API validation.
+
+## Jenkins Pipeline
+
+This repository includes a [Jenkinsfile](Jenkinsfile) for Jenkins Pipeline as Code.
+
+Jenkins requirements:
+
+- Run builds on an agent labeled `api-tests`.
+- Keep the built-in node executor count at `0`.
+- Install the Allure Jenkins plugin to publish `allure-results` directly on the build page.
+- Configure GitHub webhooks for push-triggered builds when Jenkins is reachable from GitHub. SCM polling is also configured for environments without webhook access.
+
+The Jenkins pipeline checks out this test suite, clones `Haohua-Sun/full-stack-fastapi-template`, creates CI environment files, starts the FastAPI backend and PostgreSQL with Docker Compose, runs `ruff` and `pytest`, publishes JUnit results, generates an Allure HTML report, archives report artifacts, and cleans up the Compose stack.
+
+Webhook trigger support is preconfigured with `githubPush()`. For a reachable Jenkins instance, add this GitHub repository webhook:
+
+```text
+Payload URL: http(s)://<jenkins-host>/github-webhook/
+Content type: application/json
+Events: Just the push event
+```
+
+## Implementation Notes
+
+- `ApiClient` centralizes request routing, auth headers, timeouts, response handling, and Allure attachments.
+- Session-level fixtures load environment settings, verify service readiness, and manage the administrator token.
+- Function-level fixtures create temporary users/items and clean up test data through a resource registry.
+- JSON files maintain data-driven login and Item test cases.
+- JSON Schema assertions validate token, user, Item, list, message, and validation-error responses.
+- Database assertions verify create, update, and delete persistence behavior.
+- Allure attachments mask sensitive values such as passwords, tokens, and `Authorization` headers.
+- Allure environment metadata records project, framework, HTTP client, database, ORM, runtime, Python version, and CI provider.
 
 ## Project Structure
 
 ```text
 .
+├── assets/
+│   ├── allure-overview.png
+│   └── jenkins-allure-report.png
 ├── data/
 │   ├── item_create_cases.json
 │   ├── item_update_cases.json
@@ -49,6 +126,7 @@ The suite covers authentication, token validation, user workflows, administrator
 │   ├── test_07_database.py
 │   └── test_08_admin.py
 ├── utils/
+│   ├── allure_environment.py
 │   ├── api_client.py
 │   ├── assertions.py
 │   ├── config.py
@@ -101,81 +179,12 @@ python -m ruff check tests utils
 python -m pytest -v
 ```
 
-Generate Allure raw results:
+Generate Allure results and HTML report:
 
 ```bash
 python -m pytest -v
-```
-
-The raw results are written to `allure-results/`. To view an HTML report locally, install Allure CLI separately and run:
-
-```bash
 allure generate allure-results -o allure-report --clean
 allure open allure-report
 ```
 
-When downloading the `allure-report` artifact from GitHub Actions, serve the extracted directory over HTTP before opening it:
-
-```bash
-cd allure-report
-python3 -m http.server 5050
-```
-
-Then open `http://localhost:5050`. Opening `index.html` directly with `file://` can show a blank Allure page because the browser blocks local JSON loading.
-
-## Test Markers
-
-- `smoke`: service availability
-- `auth`: login, token, and authorization
-- `users`: signup, profile, and password workflows
-- `admin`: administrator user management
-- `items`: Item resource operations
-- `flow`: multi-step business workflows
-- `schema`: response contract validation
-- `db`: database persistence assertions
-
-## Coverage
-
-The suite currently collects `58` tests and covers `17/23` OpenAPI operations. See [OPENAPI_COVERAGE.md](OPENAPI_COVERAGE.md) for the coverage matrix, database assertion scope, known defect tracking, and planned extensions.
-
-One known defect is tracked with `xfail`: `GET /api/v1/items/` returns `500` for negative `skip`, while a validation error is expected.
-
-## Continuous Integration
-
-GitHub Actions is enabled in [.github/workflows/api-tests.yml](.github/workflows/api-tests.yml).
-
-On push, pull request, or manual dispatch, CI:
-
-1. Checks out this API test suite.
-2. Checks out `Haohua-Sun/full-stack-fastapi-template`.
-3. Creates a CI-only `.env` file for the FastAPI application.
-4. Starts the FastAPI backend and PostgreSQL with Docker Compose.
-5. Runs `ruff` and the full `pytest` API test suite.
-6. Generates an Allure HTML report from `allure-results`.
-7. Uploads both `allure-results` and `allure-report` as workflow artifacts.
-8. Prints Docker logs on failure and cleans up the Compose stack.
-
-## Jenkins Pipeline
-
-This repository also includes a [Jenkinsfile](Jenkinsfile). A Jenkins Pipeline job can run it with `Pipeline script from SCM`.
-
-Recommended Jenkins setup:
-
-- Run builds on an agent labeled `api-tests`.
-- Keep the built-in node executor count at `0` after the agent is connected.
-- Install the Allure Jenkins plugin to publish `allure-results` directly on the build page, while still archiving `allure-results` and `allure-report` as a fallback.
-- Use GitHub webhooks when Jenkins is reachable from GitHub; for a local Jenkins instance, the Jenkinsfile also keeps SCM polling every 5 minutes as a fallback.
-
-The Jenkins pipeline checks out this test suite, clones `Haohua-Sun/full-stack-fastapi-template`, creates CI environment files, starts the FastAPI backend and PostgreSQL with Docker Compose, runs `ruff` and `pytest`, publishes JUnit results, generates an Allure HTML report, archives report artifacts, and cleans up the Compose stack.
-
-The Jenkinsfile publishes JUnit results, publishes the Allure report through the Allure Jenkins plugin, and also archives `allure-results` and the generated `allure-report` directory as build artifacts.
-
-Webhook trigger support is preconfigured with `githubPush()`. For a publicly reachable Jenkins instance, add this GitHub repository webhook:
-
-```text
-Payload URL: http(s)://<jenkins-host>/github-webhook/
-Content type: application/json
-Events: Just the push event
-```
-
-Local Docker/WSL Jenkins instances are usually not reachable from GitHub, so SCM polling remains enabled for local automation.
+Allure CLI is required only for generating or serving the HTML report locally. CI publishes `allure-results` and `allure-report` as build artifacts.
