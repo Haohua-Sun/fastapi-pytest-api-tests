@@ -4,9 +4,9 @@
 
 [![API automation tests](https://github.com/Haohua-Sun/fastapi-pytest-api-tests/actions/workflows/api-tests.yml/badge.svg)](https://github.com/Haohua-Sun/fastapi-pytest-api-tests/actions/workflows/api-tests.yml)
 
-这是一个面向 [`full-stack-fastapi-template`](https://github.com/Haohua-Sun/full-stack-fastapi-template) 的接口自动化测试套件，使用 `pytest`、`requests`、JSON Schema 校验、PostgreSQL 数据库断言、Allure 报告、GitHub Actions 和 Jenkins 构建。
+这是一个面向 [`full-stack-fastapi-template`](https://github.com/Haohua-Sun/full-stack-fastapi-template) 的接口自动化测试套件，主体使用 `pytest + requests` 从外部客户端视角验证 FastAPI 后端接口。
 
-测试套件从外部客户端视角验证 FastAPI 后端，覆盖登录认证、token 校验、用户流程、管理员操作、Item CRUD、权限隔离、响应契约校验、多步骤业务链路以及数据库持久化检查。
+测试套件覆盖登录认证、token 校验、用户流程、管理员操作、Item CRUD、权限隔离和多步骤业务链路。在核心接口回归的基础上，补充 JSON Schema 响应契约校验、PostgreSQL 数据库断言、Allure 报告展示，以及 GitHub Actions / Jenkins 持续集成。
 
 ## 测试结果
 
@@ -41,18 +41,25 @@
 - `schema`: 响应契约校验
 - `db`: PostgreSQL 持久化断言
 
-## 技术栈
+## 技术栈与工具
 
-- `pytest`: 测试组织、fixture、marker、参数化
-- `requests`: HTTP API 请求
-- `jsonschema`: 响应契约校验
-- `SQLAlchemy` + `psycopg`: PostgreSQL 持久化断言
-- `allure-pytest`: Allure 原始结果生成
-- Allure CLI: CI 和本地运行中的 HTML 报告生成
+核心测试框架：
+
+- `pytest`: 测试组织、fixture、marker、参数化和回归执行
+- `requests`: 发送 HTTP API 请求并校验响应结果
+
+辅助校验与数据处理：
+
+- `jsonschema`: 响应结构校验
+- `SQLAlchemy` + `psycopg`: PostgreSQL 数据库断言
 - `python-dotenv`: 本地环境变量加载
+
+报告与工程化：
+
+- `allure-pytest` / Allure CLI: 测试报告生成和展示
+- Docker Compose: CI 中启动被测服务和数据库
+- GitHub Actions / Jenkins: 持续集成执行
 - `ruff`: 静态检查
-- Docker Compose: CI 中的应用和数据库运行环境
-- GitHub Actions + Jenkins: CI 执行和测试报告发布
 
 ## 持续集成
 
@@ -101,6 +108,7 @@ Events: Just the push event
 - 使用 JSON 文件维护登录和 Item 相关的数据驱动用例。
 - 使用 JSON Schema 校验 token、用户、Item、列表、消息和参数校验错误响应。
 - 针对创建、更新、删除行为提供数据库持久化断言。
+- 使用 `xfail` 跟踪已知接口缺陷，避免 CI 被已知问题长期阻塞。
 - 对 Allure 请求/响应附件中的 password、token、`Authorization` 等敏感字段进行脱敏。
 - Allure environment 元信息记录项目、框架、HTTP client、数据库、ORM、运行环境、Python 版本和 CI 平台。
 
@@ -184,7 +192,9 @@ python -m pytest -v
 ```bash
 python -m pytest -v
 allure generate allure-results -o allure-report --clean
-allure open allure-report
+allure open --host 0.0.0.0 --port 5050 allure-report
 ```
+
+然后访问 `http://localhost:5050` 查看报告。
 
 本地生成或打开 HTML 报告需要额外安装 Allure CLI。CI 会将 `allure-results` 和 `allure-report` 作为构建 artifacts 发布。

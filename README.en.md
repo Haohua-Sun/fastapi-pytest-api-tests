@@ -4,9 +4,9 @@
 
 [![API automation tests](https://github.com/Haohua-Sun/fastapi-pytest-api-tests/actions/workflows/api-tests.yml/badge.svg)](https://github.com/Haohua-Sun/fastapi-pytest-api-tests/actions/workflows/api-tests.yml)
 
-An API automation test suite for [`full-stack-fastapi-template`](https://github.com/Haohua-Sun/full-stack-fastapi-template), built with `pytest`, `requests`, JSON Schema validation, PostgreSQL database assertions, Allure reporting, GitHub Actions, and Jenkins.
+An API automation test suite for [`full-stack-fastapi-template`](https://github.com/Haohua-Sun/full-stack-fastapi-template). The main implementation uses `pytest + requests` to validate the FastAPI backend from an external client perspective.
 
-The suite validates the FastAPI backend from an external client perspective. It covers authentication, token validation, user workflows, administrator operations, Item CRUD, permission isolation, response contract validation, multi-step business flows, and persistence checks.
+The suite covers authentication, token validation, user workflows, administrator operations, Item CRUD, permission isolation, and multi-step business flows. On top of the core API regression suite, it adds JSON Schema response contract validation, PostgreSQL database assertions, Allure reporting, and GitHub Actions / Jenkins CI integration.
 
 ## Test Results
 
@@ -41,18 +41,25 @@ See [OPENAPI_COVERAGE.md](OPENAPI_COVERAGE.md) for the coverage matrix, database
 - `schema`: response contract validation
 - `db`: PostgreSQL persistence assertions
 
-## Tech Stack
+## Tech Stack and Tools
 
-- `pytest`: test organization, fixtures, markers, parametrization
-- `requests`: HTTP API calls
-- `jsonschema`: response contract validation
-- `SQLAlchemy` + `psycopg`: PostgreSQL persistence assertions
-- `allure-pytest`: Allure raw result generation
-- Allure CLI: HTML report generation in CI and local runs
+Core test framework:
+
+- `pytest`: test organization, fixtures, markers, parametrization, and regression execution
+- `requests`: HTTP API calls and response validation
+
+Supporting validation and data handling:
+
+- `jsonschema`: response structure validation
+- `SQLAlchemy` + `psycopg`: PostgreSQL database assertions
 - `python-dotenv`: local environment loading
-- `ruff`: static checks
+
+Reporting and engineering:
+
+- `allure-pytest` / Allure CLI: test report generation and presentation
 - Docker Compose: application and database runtime in CI
-- GitHub Actions + Jenkins: CI execution and reporting
+- GitHub Actions / Jenkins: continuous integration execution
+- `ruff`: static checks
 
 ## Continuous Integration
 
@@ -101,6 +108,7 @@ Events: Just the push event
 - JSON files maintain data-driven login and Item test cases.
 - JSON Schema assertions validate token, user, Item, list, message, and validation-error responses.
 - Database assertions verify create, update, and delete persistence behavior.
+- `xfail` tracks known API defects without keeping CI permanently blocked by an acknowledged issue.
 - Allure attachments mask sensitive values such as passwords, tokens, and `Authorization` headers.
 - Allure environment metadata records project, framework, HTTP client, database, ORM, runtime, Python version, and CI provider.
 
@@ -184,7 +192,9 @@ Generate Allure results and HTML report:
 ```bash
 python -m pytest -v
 allure generate allure-results -o allure-report --clean
-allure open allure-report
+allure open --host 0.0.0.0 --port 5050 allure-report
 ```
+
+Then open `http://localhost:5050` in your browser.
 
 Allure CLI is required only for generating or serving the HTML report locally. CI publishes `allure-results` and `allure-report` as build artifacts.

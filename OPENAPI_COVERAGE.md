@@ -84,4 +84,4 @@
 - 为密码找回流程引入邮件测试替身，覆盖 recovery 和 reset-password。
 - 为 `DELETE /api/v1/users/me` 设计独立一次性账号用例，验证自删除能力。
 - 基于 `openapi.json` 生成接口覆盖矩阵，定期对比新增/删除接口。
-- 在迁移到 WSL 后补充 Docker Compose 和 CI，使被测服务与自动化套件可一键运行。
+- 在 CI 中定期校验 `openapi.json` 与被测应用实际接口是否保持同步，避免覆盖矩阵滞后。
